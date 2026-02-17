@@ -145,7 +145,7 @@ const TrashIcon = () => (
   </svg>
 );
 
-function FlipCard({ front, back, flipped, onClick, dark }) {
+function FlipCard({ front, back, flipped, onFlip, onNext, dark }) {
   // Animation duration halved (faster)
   const HALF = 110;
   const { t: tr } = useTranslation();
@@ -156,6 +156,16 @@ function FlipCard({ front, back, flipped, onClick, dark }) {
   const timerRef = useRef(null);
   const prevFlipped = useRef(flipped);
   const prevFront = useRef(front);
+
+  const handleClick = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickY = e.clientY - rect.top;
+    if (clickY < rect.height / 2) {
+      onFlip && onFlip();
+    } else {
+      onNext && onNext();
+    }
+  };
 
   // Only the answer (back) side is green; use the same green as the button (t.activeBg)
   // t.activeBg: D ? "#0c1f0c" : "#f0faf0"
@@ -193,7 +203,7 @@ function FlipCard({ front, back, flipped, onClick, dark }) {
   const boxShadow = isBack ? cardColors.shadow : (dark ? "0 6px 32px rgba(0,0,0,0.45)" : "0 6px 32px rgba(0,0,0,0.10)");
 
   return (
-    <div onClick={onClick} style={{
+    <div onClick={handleClick} style={{
       cursor: "pointer", width: "100%", maxWidth: 680, margin: "0 auto", height: 340,
       userSelect: "none", background: bgColor, borderRadius: 28,
       border: `3px solid ${borderColor}`,
@@ -488,44 +498,46 @@ ${promptInput.trim()}`;
   const sectionLabel = { fontSize: "0.7rem", color: t.subText, textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 };
 
   if (screen === "loading") return (
-    <div style={{ fontFamily: "system-ui", background: t.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", width: "100vw" }}>
+    <div style={{ fontFamily: "system-ui", background: t.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", width: "100%", boxSizing: "border-box" }}>
       <p style={{ color: t.subText }}>{tr('loading')}</p>
     </div>
   );
 
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", background: t.bg, minHeight: "100vh", color: t.text, width: "100vw" }}>
+    <div style={{ fontFamily: "system-ui, sans-serif", background: t.bg, height: "100vh", color: t.text, width: "100%", maxWidth: "100%", overflowX: "hidden", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
       {/* Header */}
-      <div style={{ background: t.headerBg, borderBottom: `1px solid ${t.headerBorder}`, position: "sticky", top: 0, zIndex: 50 }}>
-        <div style={{ display: "flex", alignItems: "stretch", height: 54 }}>
+      <div style={{ background: t.headerBg, borderBottom: `1px solid ${t.headerBorder}`, zIndex: 50, width: "100%", boxSizing: "border-box", flexShrink: 0 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "stretch", minHeight: 54, width: "100%", boxSizing: "border-box" }}>
           {/* Logo and Title */}
-          <div style={{ padding: "0 1.8rem", display: "flex", alignItems: "center", fontWeight: 700, fontSize: "1rem", flex: 1 }}>
-            <img src={(import.meta.env.BASE_URL || '/') + 'icon.png'} alt="App Icon" style={{ width: 32, height: 32, marginRight: 12, verticalAlign: "middle" }} />
+          <div style={{ padding: "0 1.2rem", display: "flex", alignItems: "center", fontWeight: 700, fontSize: "1rem", flex: "1 1 auto", minHeight: 48 }}>
+            <img src={(import.meta.env.BASE_URL || '/') + 'icon.png'} alt="App Icon" style={{ width: 28, height: 28, marginRight: 10, verticalAlign: "middle", flexShrink: 0 }} />
             한카드 <span style={{ color: t.subText, fontWeight: 400, marginLeft: 6 }}>HanCards</span>
           </div>
           {/* Nav Tabs */}
-          <div className="navbar-tabs" style={{ display: "flex" }}>
+          <div style={{ display: "flex", flexShrink: 0, minHeight: 42 }}>
             {[ ["study", tr('nav.study')],["manage", tr('nav.manage')]].map(([s, lbl]) => (
               <button key={s} onClick={() => setScreen(s)} style={{
-                ...btnBase, borderRadius: 0, padding: "0 1.6rem", fontSize: "0.9rem",
+                ...btnBase, borderRadius: 0, padding: "0 1.2rem", fontSize: "0.88rem",
                 background: "transparent", color: screen === s ? t.text : t.subText,
                 borderBottom: screen === s ? `2px solid ${t.primaryBg}` : "2px solid transparent",
-                fontWeight: screen === s ? 600 : 400,
+                fontWeight: screen === s ? 600 : 400, whiteSpace: "nowrap",
               }}>{lbl}</button>
             ))}
             {/* About Tab */}
             <button onClick={() => setScreen("about")}
               style={{
-                ...btnBase, borderRadius: 0, padding: "0 1.6rem", fontSize: "0.9rem",
+                ...btnBase, borderRadius: 0, padding: "0 1.2rem", fontSize: "0.88rem",
                 background: "transparent", color: screen === "about" ? t.text : t.subText,
                 borderBottom: screen === "about" ? `2px solid ${t.primaryBg}` : "2px solid transparent",
-                fontWeight: screen === "about" ? 600 : 400,
+                fontWeight: screen === "about" ? 600 : 400, whiteSpace: "nowrap",
               }}>
               {tr('nav.about')}
             </button>
           </div>
         </div>
       </div>
+      {/* ── Content area: fills remaining height, scrolls internally ── */}
+      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: 0 }}>
       {/* ── ABOUT ── */}
       {screen === "about" && (
         <div style={{ padding: "3rem 2rem", maxWidth: 800, margin: "0 auto", textAlign: "center" }}>
@@ -543,7 +555,7 @@ ${promptInput.trim()}`;
 
       {/* ── STUDY ── */}
       {screen === "study" && (
-        <div style={{ padding: "3rem 2rem", margin: 0 }}>
+        <div style={{ padding: "2rem 2rem", margin: 0 }}>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: "2.5rem" }}>
             <div style={{ display: "flex", background: t.toggleBg, borderRadius: 10, padding: 3 }}>
               {[['eng', tr('study.toKorean')], ['kor', tr('study.fromKorean')]].map(([v, label]) => (
@@ -562,10 +574,9 @@ ${promptInput.trim()}`;
             </div>
           ) : card ? (
             <>
-              <FlipCard front={front} back={back} flipped={flipped} onClick={() => setFlipped(f => !f)} dark={dark} />
-              <div style={{ textAlign: "center", marginTop: 18, fontSize: "0.72rem", color: t.mutedText, display: "flex", justifyContent: "center", gap: 28 }}>
-                <span><kbd style={kbdStyle}>↑ ↓ Space</kbd> {tr('study.flip')}</span>
-                <span><kbd style={kbdStyle}>→ Enter</kbd> {tr('study.next')}</span>
+              <FlipCard front={front} back={back} flipped={flipped} onFlip={() => setFlipped(f => !f)} onNext={nextCard} dark={dark} />
+              <div style={{ textAlign: "center", marginTop: 10, fontSize: "0.85rem", color: t.mutedText, fontWeight: 500 }}>
+                Tap/click <span style={{ color: t.text, fontWeight: 600 }}>upper half</span> to flip, <span style={{ color: t.text, fontWeight: 600 }}>lower half</span> for next
               </div>
               <div style={{ display: "flex", justifyContent: "center", gap: 12, marginTop: "2.2rem" }}>
                 <button style={primaryBtn} onClick={() => setFlipped(true)} disabled={flipped}>{tr('study.flip')}</button>
@@ -583,7 +594,7 @@ ${promptInput.trim()}`;
 
       {/* ── MANAGE ── */}
       {screen === "manage" && (
-        <div style={{ padding: "2.5rem 2rem", margin: 0 }}>
+        <div style={{ padding: "1.5rem 2rem", margin: 0 }}>
           {/* Analytics */}
           <div style={{ display: "flex", gap: 14, marginBottom: "2rem", flexWrap: "wrap" }}>
             {[
@@ -614,7 +625,7 @@ ${promptInput.trim()}`;
           {packs.length === 0 ? (
             <div style={{ textAlign: "center", color: t.subText, padding: "4rem 0" }}>{tr('manage.noPacks')}</div>
           ) : (
-            <div className="ps" style={{ maxHeight: "calc(100vh - 340px)", overflowY: "auto", paddingRight: 4 }}>
+            <div className="ps" style={{ paddingRight: 4 }}>
               {Object.entries(packsByCategory).map(([cat, catPacks]) => (
                 <div key={cat} style={{ marginBottom: 28, paddingBottom: 28, borderBottom: `1px solid ${t.border}` }}>
                   <div style={{ display: "flex", alignItems: "center", marginBottom: 8, gap: 12 }}>
@@ -648,7 +659,7 @@ ${promptInput.trim()}`;
                       style={{ ...iconBtn, color: "#ff5566", marginLeft: "auto" }}
                     ><TrashIcon /></button>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 14 }}>
                     {catPacks.map(p => (
                       <div key={p.id} style={{ background: p.enabled ? t.activeBg : t.rowBg, border: `1px solid ${p.enabled ? t.activeBorder : t.border}`, borderRadius: 14, padding: "1.1rem", display: "flex", flexDirection: "column", gap: 10, transition: "background 0.2s, border-color 0.2s" }}>
                         <div style={{ fontWeight: 600, fontSize: "0.88rem", color: p.enabled ? t.activeText : t.text, lineHeight: 1.35, wordBreak: "break-word", flex: 1 }}>{p.name}</div>
@@ -672,6 +683,7 @@ ${promptInput.trim()}`;
           )}
         </div>
       )}
+      </div>{/* end content area */}
 
       {/* ── EDIT PACK MODAL ── */}
       {editingPackId && editPack && (
