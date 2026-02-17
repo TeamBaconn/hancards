@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
-const STORAGE_KEY = "HANCARDS-V1";
+const STORAGE_KEY = "kcards-v15";
 
 const CSV_HINT = `pack_category,pack_name,korean,english
 TC3,TC3 - Bài 1,학기,semester
@@ -256,6 +256,17 @@ export default function App() {
     persist(np, nc);
   };
 
+  const deleteCategory = (cat) => {
+    if (!confirm(`Delete all packs in "${cat}"?`)) return;
+    const np = packs.filter(p => (p.category || p.pack_category || "Uncategorized") !== cat);
+    setPacks(np);
+    const nc = {}; setCounts(nc); countsRef.current = nc;
+    const words = activeWords(np);
+    setCardIdx(words.length ? pickCard(words, nc, null) : null);
+    lastIdxRef.current = null;
+    persist(np, nc);
+  };
+
   const addPack = () => {
     const name = newPackName.trim(); if (!name) return;
     const np = [...packs, { id: `pack-${Date.now()}`, name, words: [], enabled: false }];
@@ -334,17 +345,23 @@ export default function App() {
     if (!promptInput.trim()) return;
     const prompt = `Convert the following Korean study material into a CSV with exactly 4 columns: pack_category, pack_name, korean, english.
 
-  Rules:
-  - First row must be exactly: pack_category,pack_name,korean,english
-  - Use the lesson/topic title as pack_name (same value for all words in the same lesson)
-  - Use the course/book/overall group as pack_category (same value for all packs in the same group)
-  - korean = the Korean word or phrase
-  - english = the English or Vietnamese translation (keep it concise, under 80 chars)
-  - If a value contains a comma, wrap it in double quotes
-  - Output ONLY the raw CSV. No explanation, no markdown fences, no extra text.
+Rules:
+- First row must be exactly: pack_category,pack_name,korean,english
+- Use the lesson/topic title as pack_name (same value for all words in the same lesson)
+- Use the course/book/overall group as pack_category (same value for all packs in the same group)
+- korean = the Korean word or phrase
+- english = the English or Vietnamese translation (keep it concise, under 80 chars)
+- If a value contains a comma, wrap it in double quotes
+- Output ONLY the raw CSV. No explanation, no markdown fences, no extra text.
 
-  Material:
-  ${promptInput.trim()}`;
+Naming rules (very important):
+- Keep pack_category SHORT: max 20 characters. Use only the essential identifier (e.g. "TC3", "TOPIK1", "Book2"). Drop filler words like "Chapter", "Unit", "Lesson".
+- Keep pack_name SHORT: max 30 characters. Use only the core topic or lesson number (e.g. "Bài 1", "L3 Family", "Ch2 Food"). Drop long subtitles.
+- pack_category and pack_name must NOT contain any of these symbols: " ' , \ / | : ; ( ) [ ] { }
+- Use only plain alphanumeric characters, spaces, hyphens, and dots.
+
+Material:
+${promptInput.trim()}`;
     navigator.clipboard.writeText(prompt);
     setPromptCopied(true);
     setTimeout(() => setPromptCopied(false), 3000);
@@ -430,10 +447,11 @@ export default function App() {
         <div style={{ padding: "3rem 2rem", margin: 0 }}>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: "2.5rem" }}>
             <div style={{ display: "flex", background: t.toggleBg, borderRadius: 10, padding: 3 }}>
-              {[["eng","🇺🇸 → 🇰🇷"],["kor","🇰🇷 → 🇺🇸"]].map(([v, lbl]) => (
+              {[["eng", "🇺🇸", "🇰🇷"], ["kor", "🇰🇷", "🇺🇸"]].map(([v, f, t2]) => (
                 <button key={v} onClick={() => { setMode(v); setFlipped(false); }}
-                  style={{ ...btnBase, padding: "0.55rem 1.2rem", fontSize: "0.85rem", background: mode === v ? t.toggleActive : "transparent", color: mode === v ? t.text : t.subText, boxShadow: mode === v ? "0 1px 4px rgba(0,0,0,0.25)" : "none" }}>
-                  {lbl}
+                  title={v === "eng" ? "English → Korean" : "Korean → English"}
+                  style={{ ...btnBase, padding: "0.5rem 1.1rem", fontSize: "1.35rem", lineHeight: 1, display: "flex", alignItems: "center", gap: 4, background: mode === v ? t.toggleActive : "transparent", color: mode === v ? t.text : t.subText, boxShadow: mode === v ? "0 1px 4px rgba(0,0,0,0.25)" : "none" }}>
+                  {f}<span style={{ fontSize: "0.75rem", opacity: 0.4, margin: "0 1px" }}>/</span>{t2}
                 </button>
               ))}
             </div>
@@ -469,14 +487,15 @@ export default function App() {
       {screen === "manage" && (
         <div style={{ padding: "2.5rem 2rem", margin: 0 }}>
           {/* Analytics */}
-          <div style={{ display: "flex", gap: 14, marginBottom: "2rem" }}>
+          <div style={{ display: "flex", gap: 14, marginBottom: "2rem", flexWrap: "wrap" }}>
             {[
-              ["Packs",`${packs.length}`],
-              ["Active",`${enabledCount} / ${packs.length}`],
-              ["Words",`${packs.reduce((a,p)=>a+p.words.length,0)}`],
-              ["Active Words",`${allWords.length}`]
+              ["Categories", `${Object.keys(packsByCategory).length}`],
+              ["Packs", `${packs.length}`],
+              ["Active Packs", `${enabledCount} / ${packs.length}`],
+              ["Words", `${packs.reduce((a, p) => a + p.words.length, 0)}`],
+              ["Active Words", `${allWords.length}`],
             ].map(([lbl, val]) => (
-              <div key={lbl} style={{ background: t.rowBg, borderRadius: 12, padding: "1rem 1.2rem", border: `1px solid ${t.border}`, flex: 1, textAlign: "center" }}>
+              <div key={lbl} style={{ background: t.rowBg, borderRadius: 12, padding: "1rem 1.2rem", border: `1px solid ${t.border}`, flex: 1, textAlign: "center", minWidth: 90 }}>
                 <div style={{ fontSize: "1.5rem", fontWeight: 700, color: t.text, lineHeight: 1 }}>{val}</div>
                 <div style={{ fontSize: "0.72rem", color: t.subText, marginTop: 6 }}>{lbl}</div>
               </div>
@@ -524,6 +543,12 @@ export default function App() {
                     >
                       <div style={{ position: "relative", top: 0, left: catPacks.every(p => p.enabled) ? 18 : 3, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.25)" }} />
                     </button>
+                    <span style={{ fontSize: "0.72rem", color: t.subText, marginLeft: 2 }}>{catPacks.length} pack{catPacks.length !== 1 ? "s" : ""}</span>
+                    <button
+                      onClick={() => deleteCategory(cat)}
+                      title={`Delete all packs in ${cat}`}
+                      style={{ ...iconBtn, color: "#ff5566", marginLeft: "auto" }}
+                    ><TrashIcon /></button>
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14 }}>
                     {catPacks.map(p => (
