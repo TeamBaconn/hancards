@@ -9,6 +9,11 @@ if %errorlevel% neq 0 (
     exit /b
 )
 
+echo Deleting old dist...
+if exist dist (
+    rmdir /s /q dist
+)
+
 echo Installing deps...
 call npm install
 
@@ -23,7 +28,7 @@ if %errorlevel% neq 0 (
 
 echo Committing...
 git add .
-git commit -m "auto build"
+git commit -m "Auto Deploy"
 
 echo Pushing...
 git push origin main
