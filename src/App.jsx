@@ -23,6 +23,16 @@ async function loadData() {
     // Merge pre-built packs from all CSVs listed in public/packs/index.json
     try {
       const base = import.meta.env.BASE_URL || "/";
+      // Fetch defaults.json for enable/disable info
+      let defaults = {};
+      try {
+        const defaultsRes = await fetch(`${base}packs/defaults.json`);
+        if (defaultsRes.ok) {
+          defaults = await defaultsRes.json();
+        }
+      } catch (e) {
+        console.warn("Could not load pack defaults", e);
+      }
       const indexRes = await fetch(`${base}packs/index.json`);
       if (indexRes.ok) {
         const csvFiles = await indexRes.json();
@@ -51,7 +61,7 @@ async function loadData() {
                   name: dp.name,
                   category: dp.category,
                   words: dp.words,
-                  enabled: true,
+                  enabled: defaults[csvFile] === true,
                 });
                 changed = true;
               }
@@ -254,6 +264,7 @@ export default function App() {
   const [addWordMsg, setAddWordMsg] = useState("");
   const [promptInput, setPromptInput] = useState("");
   const [promptCopied, setPromptCopied] = useState(false);
+  const [expandedCats, setExpandedCats] = useState({});
 
   const lastIdxRef = useRef(null);
   const packsRef = useRef(packs);
@@ -627,10 +638,17 @@ ${promptInput.trim()}`;
             <div style={{ textAlign: "center", color: t.subText, padding: "4rem 0" }}>{tr('manage.noPacks')}</div>
           ) : (
             <div className="ps" style={{ paddingRight: 4 }}>
-              {Object.entries(packsByCategory).map(([cat, catPacks]) => (
+              {Object.entries(packsByCategory).map(([cat, catPacks]) => {
+                const hasEnabled = catPacks.some(p => p.enabled);
+                const isExpanded = expandedCats[cat] !== undefined ? expandedCats[cat] : hasEnabled;
+                return (
                 <div key={cat} style={{ marginBottom: 28, paddingBottom: 28, borderBottom: `1px solid ${t.border}` }}>
-                  <div style={{ display: "flex", alignItems: "center", marginBottom: 8, gap: 12 }}>
-                    <span style={{ fontWeight: 700, fontSize: "1.05rem", color: t.text }}>{cat}</span>
+                  <div style={{ display: "flex", alignItems: "center", marginBottom: isExpanded ? 8 : 0, gap: 12, cursor: "pointer", userSelect: "none" }}
+                    onClick={(e) => { if (e.target.closest('button')) return; setExpandedCats(prev => ({ ...prev, [cat]: !isExpanded })); }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={t.subText} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "transform 0.2s", transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)", flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
+                      <span style={{ fontWeight: 700, fontSize: "1.05rem", color: t.text }}>{cat}</span>
+                    </span>
                     <button
                       onClick={() => toggleCategory(cat)}
                       style={{
@@ -660,6 +678,7 @@ ${promptInput.trim()}`;
                       style={{ ...iconBtn, color: "#ff5566", marginLeft: "auto" }}
                     ><TrashIcon /></button>
                   </div>
+                  {isExpanded && (
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 14 }}>
                     {catPacks.map(p => (
                       <div key={p.id} style={{ background: p.enabled ? t.activeBg : t.rowBg, border: `1px solid ${p.enabled ? t.activeBorder : t.border}`, borderRadius: 14, padding: "1.1rem", display: "flex", flexDirection: "column", gap: 10, transition: "background 0.2s, border-color 0.2s" }}>
@@ -678,8 +697,10 @@ ${promptInput.trim()}`;
                       </div>
                     ))}
                   </div>
+                  )}
                 </div>
-              ))}
+              );
+              })}
             </div>
           )}
         </div>
