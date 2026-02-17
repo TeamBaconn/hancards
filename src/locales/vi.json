@@ -25,7 +25,12 @@
     "pack": "bộ",
     "packs": "bộ",
     "seen": "Đã xem",
-    "card": "từ vựng"
+    "card": "từ vựng",
+    "cardTipTap": "Nhấn",
+    "cardTipUpper": "nửa trên",
+    "cardTipFlip": "để lật",
+    "cardTipLower": "nửa dưới",
+    "cardTipNext": "để tiếp"
   },
   "manage": {
     "categories": "Danh mục",

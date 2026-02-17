@@ -25,7 +25,12 @@
     "pack": "pack",
     "packs": "packs",
     "seen": "Seen",
-    "card": "Card"
+    "card": "Card",
+    "cardTipTap": "Tap",
+    "cardTipUpper": "upper half",
+    "cardTipFlip": "to flip",
+    "cardTipLower": "lower half",
+    "cardTipNext": "for next"
   },
   "manage": {
     "categories": "Categories",

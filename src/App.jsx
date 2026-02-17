@@ -575,14 +575,15 @@ ${promptInput.trim()}`;
           ) : card ? (
             <>
               <FlipCard front={front} back={back} flipped={flipped} onFlip={() => setFlipped(f => !f)} onNext={nextCard} dark={dark} />
-              <div style={{ textAlign: "center", marginTop: 10, fontSize: "0.85rem", color: t.mutedText, fontWeight: 500 }}>
-                Tap/click <span style={{ color: t.text, fontWeight: 600 }}>upper half</span> to flip, <span style={{ color: t.text, fontWeight: 600 }}>lower half</span> for next
+              <div style={{ textAlign: "center", marginTop: 14, lineHeight: 2 }}>
+                <div style={{ fontSize: "0.82rem", color: t.subText, fontWeight: 500 }}>
+                  {tr('study.cardTipTap')} <strong style={{ color: t.text }}>{tr('study.cardTipUpper')}</strong> {tr('study.cardTipFlip')} <span style={{ margin: "0 0.5em" }}>·</span> {tr('study.cardTipTap')} <strong style={{ color: t.text }}>{tr('study.cardTipLower')}</strong> {tr('study.cardTipNext')}
+                </div>
+                <div style={{ fontSize: "0.82rem", color: t.subText, fontWeight: 500 }}>
+                  <kbd style={kbdStyle}>↑</kbd> <kbd style={kbdStyle}>↓</kbd> <kbd style={kbdStyle}>Space</kbd> <strong style={{ color: t.text }}>{tr('study.flip')}</strong> <span style={{ margin: "0 0.5em" }}>·</span> <kbd style={kbdStyle}>→</kbd> <kbd style={kbdStyle}>Enter</kbd> <strong style={{ color: t.text }}>{tr('study.next')}</strong>
+                </div>
               </div>
-              <div style={{ display: "flex", justifyContent: "center", gap: 12, marginTop: "2.2rem" }}>
-                <button style={primaryBtn} onClick={() => setFlipped(true)} disabled={flipped}>{tr('study.flip')}</button>
-                <button style={primaryBtn} onClick={nextCard}>{tr('study.nextBtn')}</button>
-              </div>
-              <div style={{ display: "flex", justifyContent: "center", gap: 32, marginTop: "2rem", fontSize: "0.78rem", color: t.mutedText }}>
+              <div style={{ display: "flex", justifyContent: "center", gap: 32, marginTop: "1.5rem", fontSize: "0.78rem", color: t.mutedText }}>
                 <span>{allWords.length} {tr('study.words')} · {enabledCount} {enabledCount !== 1 ? tr('study.packs') : tr('study.pack')}</span>
                 <span>{tr('study.seen')} {minSeen}–{maxSeen}×</span>
                 <span>{tr('study.card')} #{(cardIdx ?? 0) + 1}</span>
