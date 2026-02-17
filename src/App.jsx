@@ -568,9 +568,8 @@ ${promptInput.trim()}`;
                 <span><kbd style={kbdStyle}>→ Enter</kbd> {tr('study.next')}</span>
               </div>
               <div style={{ display: "flex", justifyContent: "center", gap: 12, marginTop: "2.2rem" }}>
-                {!flipped
-                  ? <button style={primaryBtn} onClick={() => setFlipped(true)}>{tr('study.showAnswer')}</button>
-                  : <button style={primaryBtn} onClick={nextCard}>{tr('study.nextBtn')}</button>}
+                <button style={primaryBtn} onClick={() => setFlipped(true)} disabled={flipped}>{tr('study.flip')}</button>
+                <button style={primaryBtn} onClick={nextCard}>{tr('study.nextBtn')}</button>
               </div>
               <div style={{ display: "flex", justifyContent: "center", gap: 32, marginTop: "2rem", fontSize: "0.78rem", color: t.mutedText }}>
                 <span>{allWords.length} {tr('study.words')} · {enabledCount} {enabledCount !== 1 ? tr('study.packs') : tr('study.pack')}</span>
