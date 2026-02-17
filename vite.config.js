@@ -28,5 +28,5 @@ function packsIndexPlugin() {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), packsIndexPlugin()],
-  base: '/HanCards/',
+  base: '/hancards/',
 })

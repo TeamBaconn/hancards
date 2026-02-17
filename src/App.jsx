@@ -504,7 +504,7 @@ ${promptInput.trim()}`;
             한카드 <span style={{ color: t.subText, fontWeight: 400, marginLeft: 6 }}>HanCards</span>
           </div>
           {/* Nav Tabs */}
-          <div style={{ display: "flex" }}>
+          <div className="navbar-tabs" style={{ display: "flex" }}>
             {[ ["study", tr('nav.study')],["manage", tr('nav.manage')]].map(([s, lbl]) => (
               <button key={s} onClick={() => setScreen(s)} style={{
                 ...btnBase, borderRadius: 0, padding: "0 1.6rem", fontSize: "0.9rem",

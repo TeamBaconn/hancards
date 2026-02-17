@@ -1,6 +1,6 @@
 {
-  "name": "HanCards",
-  "homepage": "https://teambaconn.github.io/HanCards",
+  "name": "hancards",
+  "homepage": "https://teambaconn.github.io/hancards",
   "private": true,
   "version": "0.0.0",
   "type": "module",
