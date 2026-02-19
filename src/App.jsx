@@ -1003,10 +1003,10 @@ ${promptInput.trim()}`;
       {/* ── Language Selection Modal (first visit) — round flag buttons in grid ── */}
       {langModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem" }}>
-          <div style={{ background: D ? "#1c1c1c" : "#fff", borderRadius: 22, width: "100%", maxWidth: 360, padding: "2.5rem 2rem", textAlign: "center", boxShadow: "0 12px 40px rgba(0,0,0,0.35)" }}>
-            <img src={(import.meta.env.BASE_URL || '/') + 'icon.png'} alt="HanCards" style={{ width: 72, height: 72, marginBottom: 14 }} />
-            <h2 style={{ fontWeight: 800, fontSize: "1.4rem", marginBottom: 4, color: t.text }}>한카드 HanCards</h2>
-            <p style={{ color: t.subText, marginBottom: 24, fontSize: "0.88rem" }}>Choose your language</p>
+          <div style={{ background: D ? "#111111" : "#fff", borderRadius: 22, padding: "1.5rem 1.5rem", textAlign: "center" }}>
+            <img src={(import.meta.env.BASE_URL || '/') + 'icon.png'} alt="HanCards" style={{ width: 150, height: 150 }} />
+            <p style={{ fontWeight: 800, fontSize: "1.4rem", color: t.text, margin: 0 }}>한카드 HanCards</p>
+            <p style={{ color: t.subText, fontSize: "0.88rem", margin: 0, marginBottom: "2rem" }}>Choose your language</p>
             <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 10 }}>
               {LANGUAGES.map(lang => (
                 <button key={lang.code} onClick={() => handleLangSelect(lang.code)}
