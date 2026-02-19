@@ -2,8 +2,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import en from './locales/en.json';
 import vi from './locales/vi.json';
-
-const LANG_KEY = 'HANCARDS_LANG';
+import { LANG_KEY } from './config';
 
 i18n
   .use(initReactI18next)
