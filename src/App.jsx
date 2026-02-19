@@ -325,7 +325,7 @@ function FlipCard({ front, back, flipped, onFlip, onNext, dark }) {
       userSelect: "none", background: bgColor, borderRadius: 28,
       border: `3px solid ${borderClr}`, boxShadow,
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-      padding: "1.875rem 2.625rem", boxSizing: "border-box",
+      padding: "1rem 0.25rem", boxSizing: "border-box",
       transition: `background 0.2s, border 0.2s, box-shadow 0.2s, transform ${HALF}ms cubic-bezier(.4,0,.2,1)`,
       transform: `scaleX(${phase === "out" ? 0 : 1})`,
       overflow: "hidden",
