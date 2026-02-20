@@ -1133,11 +1133,15 @@
   transition: all var(--transition-fast);
   text-align: left;
   width: 100%;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
 }
 
-.quiz-option:hover:not(.quiz-option--correct):not(.quiz-option--wrong):not(.quiz-option--dimmed) {
-  border-color: var(--color-text-secondary);
-  background: var(--color-toggle-bg);
+@media (hover: hover) and (pointer: fine) {
+  .quiz-option:hover:not(.quiz-option--correct):not(.quiz-option--wrong):not(.quiz-option--dimmed) {
+    border-color: var(--color-text-secondary);
+    background: var(--color-toggle-bg);
+  }
 }
 
 .quiz-option-letter {
