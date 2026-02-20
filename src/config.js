@@ -23,7 +23,7 @@ export const LANG_KEY = "HANCARDS_LANG";
 
 
 export const QUIZ_DELAY = {
-  correct: 1000,
+  correct: 2500,
   wrong: 4000,
 };
 

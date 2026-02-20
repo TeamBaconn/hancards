@@ -162,7 +162,7 @@ function ProgressChart({ packs, scores }) {
   const barWidth = 6;
   const barGap = 2;
   const groupGap = 20;
-  const chartHeight = 28;
+  const chartHeight = 50;
   const topPad = 5;
   const bottomPad = 10;
 
@@ -383,6 +383,19 @@ export default function App() {
   useEffect(() => { modeRef.current = mode; }, [mode]);
   useEffect(() => { screenRef.current = screen; }, [screen]);
 
+  /* ── Sync theme to <html> + Safari theme-color meta ── */
+  useEffect(() => {
+    const bg = dark ? "#0e0e0e" : "#f2f3f5";
+    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+    let meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.name = "theme-color";
+      document.head.appendChild(meta);
+    }
+    meta.content = bg;
+  }, [dark]);
+
 
 
   const activeWords = useCallback((ps = packsRef.current) =>
@@ -459,26 +472,15 @@ export default function App() {
     return () => window.removeEventListener("keydown", handler);
   }, [nextCard]);
 
-  /* ── Auto-collapse disabled categories when entering manage tab ── */
+  /* ── Collapse all categories when entering manage tab ── */
   useEffect(() => {
     if (screen === "manage") {
-      const currentPacks = packsRef.current;
       const byCategory = {};
-      currentPacks.forEach(p => {
+      packsRef.current.forEach(p => {
         const cat = p.category || p.pack_category || "Uncategorized";
-        if (!byCategory[cat]) byCategory[cat] = [];
-        byCategory[cat].push(p);
+        byCategory[cat] = false;
       });
-      setExpandedCats(prev => {
-        const next = { ...prev };
-        Object.entries(byCategory).forEach(([cat, catPacks]) => {
-          const hasEnabled = catPacks.some(p => p.enabled);
-          if (!hasEnabled) {
-            next[cat] = false;
-          }
-        });
-        return next;
-      });
+      setExpandedCats(byCategory);
     }
   }, [screen]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -650,8 +652,10 @@ ${promptInput.trim()}`;
       <header className="header">
         <div className="header-inner">
           <div className="header-brand">
-            <img src={(import.meta.env.BASE_URL || '/') + 'icon.png'} alt="App Icon" className="header-brand-icon" />
-            한카드 <span className="header-brand-sub">HanCards</span>
+            <span onClick={() => setScreen("about")} style={{ cursor: "pointer" }}>
+              <img src={(import.meta.env.BASE_URL || '/') + 'icon.png'} alt="App Icon" className="header-brand-icon" />
+              한카드 <span className="header-brand-sub">HanCards</span>
+            </span>
           </div>
           <nav className="nav-tabs">
             {[["quiz", tr('nav.quiz')], ["study", tr('nav.study')], ["manage", tr('nav.manage')], ["about", tr('nav.about')]].map(([s, lbl]) => (
@@ -685,6 +689,7 @@ ${promptInput.trim()}`;
             allWords={allWords}
             scores={scores}
             enabledCount={enabledCount}
+            onGoToManage={() => setScreen("manage")}
             onScoreUpdate={(key, newScore) => {
               const s = { ...scores, [key]: newScore };
               setScores(s); scoresRef.current = s;
@@ -696,21 +701,23 @@ ${promptInput.trim()}`;
         {/* ── STUDY ── */}
         {screen === "study" && (
           <div className="study-screen">
-            <div className="mode-toggle">
-              <div className="mode-toggle-group">
-                {[['eng', tr('study.toKorean')], ['kor', tr('study.fromKorean')]].map(([v, label]) => (
-                  <button key={v} onClick={() => { setMode(v); setFlipped(false); }}
-                    title={v === 'eng' ? tr('study.toKoreanTitle') : tr('study.fromKoreanTitle')}
-                    className={`mode-toggle-btn ${mode === v ? 'mode-toggle-btn--active' : ''}`}>
-                    {label}
-                  </button>
-                ))}
+            {allWords.length > 0 && (
+              <div className="mode-toggle">
+                <div className="mode-toggle-group">
+                  {[['eng', tr('study.toKorean')], ['kor', tr('study.fromKorean')]].map(([v, label]) => (
+                    <button key={v} onClick={() => { setMode(v); setFlipped(false); }}
+                      title={v === 'eng' ? tr('study.toKoreanTitle') : tr('study.fromKoreanTitle')}
+                      className={`mode-toggle-btn ${mode === v ? 'mode-toggle-btn--active' : ''}`}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
             {allWords.length === 0 ? (
               <div className="empty-state">
                 <div className="empty-state-icon">📚</div>
-                <p>{tr('study.noPacks')} <strong className="empty-state-link" onClick={() => setScreen("manage")}>{tr('study.noPacksManage')}</strong> {tr('study.noPacksEnd')}</p>
+                <p>{tr('study.noPacks')} <strong className="empty-state-link" onClick={() => setScreen("manage")}>{tr('nav.manage')}</strong> {tr('study.noPacksEnd')}</p>
               </div>
             ) : card ? (
               <>

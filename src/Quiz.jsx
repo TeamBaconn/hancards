@@ -67,7 +67,7 @@ function getCardFontSize(text) {
    Quiz Component
    ════════════════════════════════════════════════════════════ */
 
-export default function Quiz({ allWords, scores, enabledCount, onScoreUpdate }) {
+export default function Quiz({ allWords, scores, enabledCount, onGoToManage, onScoreUpdate }) {
   const { t: tr } = useTranslation();
 
   const [quizMode, setQuizMode] = useState("mixed");
@@ -238,7 +238,7 @@ export default function Quiz({ allWords, scores, enabledCount, onScoreUpdate }) 
       <div className="quiz-screen">
         <div className="empty-state">
           <div className="empty-state-icon">🧠</div>
-          <p>{tr("quiz.noWords")}</p>
+          <p>{tr("quiz.noWords")} <strong className="empty-state-link" onClick={onGoToManage}>{tr("nav.manage")}</strong> {tr("quiz.noWordsEnd")}</p>
         </div>
       </div>
     );

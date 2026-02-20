@@ -16,7 +16,6 @@
     "prompt": "Prompt",
     "answer": "Answer",
     "noPacks": "No active packs. Go to",
-    "noPacksManage": "Vocabulary",
     "noPacksEnd": "and enable some!",
     "flip": "Flip",
     "next": "Next",
@@ -102,7 +101,8 @@
     "toKorean": "To Korean",
     "fromKorean": "From Korean",
     "question": "What does this mean?",
-    "noWords": "Need at least 2 active words. Go to Vocabulary and enable some packs!"
+    "noWords": "Need at least 2 active words. Go to",
+    "noWordsEnd": "and enable some packs!"
   },
   "loading": "Loading…"
 }

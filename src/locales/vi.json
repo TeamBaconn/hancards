@@ -16,7 +16,6 @@
     "prompt": "Gợi ý",
     "answer": "Đáp án",
     "noPacks": "Không có bộ từ vựng nào đang hoạt động. Hãy vào",
-    "noPacksManage": "Từ vựng",
     "noPacksEnd": "và bật một số bộ từ vựng!",
     "flip": "Lật",
     "next": "Tiếp",
@@ -100,7 +99,8 @@
     "toKorean": "Sang tiếng Hàn",
     "fromKorean": "Từ tiếng Hàn",
     "question": "Nghĩa là gì?",
-    "noWords": "Cần ít nhất 2 từ đang hoạt động. Vào Từ vựng và bật một số bộ từ vựng!"
+    "noWords": "Cần ít nhất 2 từ đang hoạt động. Hãy vào",
+    "noWordsEnd": "và bật một số bộ từ vựng!"
   },
   "loading": "Đang tải…"
 }
