@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
   STORAGE_KEY, LANG_KEY, SCORE, scoreColor,
-  LANGUAGES, LANG_CYCLE, LANG_MAP,
+  LANGUAGES, LANG_MAP,
   CARD_FONT_STEPS, CSV_HINT,
 } from "./config";
 import Quiz from "./Quiz";
@@ -403,14 +403,18 @@ export default function App() {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── Language selection (first visit) ── */
+  /* ── Language selection ── */
   const handleLangSelect = async (lang) => {
     i18n.changeLanguage(lang);
+    // Remove only default-imported packs; keep custom (user-added) packs
+    const customPacks = packsRef.current.filter(p => !p.id.startsWith("pack-default-"));
     const imported = await importDefaultPacks(lang);
-    setPacks(imported); packsRef.current = imported;
-    const words = activeWords(imported);
-    setCardIdx(words.length ? pickCard(words, scores, null) : null);
-    persist(imported, scores);
+    const merged = [...imported, ...customPacks];
+    setPacks(merged); packsRef.current = merged;
+    const words = activeWords(merged);
+    setCardIdx(words.length ? pickCard(words, scoresRef.current, null) : null);
+    setFlipped(false); didFlipRef.current = false; lastIdxRef.current = null;
+    persist(merged, scoresRef.current);
     setLangModal(false);
     setScreen(words.length ? "study" : "manage");
   };
@@ -608,14 +612,9 @@ ${promptInput.trim()}`;
     setTimeout(() => setPromptCopied(false), 3000);
   };
 
-  /* ── Floating lang cycle ── */
-  const cycleLang = () => {
-    const cur = i18n.language;
-    const idx = LANG_CYCLE.indexOf(cur);
-    const next = LANG_CYCLE[(idx + 1) % LANG_CYCLE.length];
-    i18n.changeLanguage(next);
-  };
-  const nextLang = LANG_MAP[LANG_CYCLE[(LANG_CYCLE.indexOf(i18n.language) + 1) % LANG_CYCLE.length]];
+  /* ── Floating lang select ── */
+  const openLangModal = () => setLangModal(true);
+  const curLang = LANG_MAP[i18n.language];
 
   /* ── Derived values ── */
   const allWords = useMemo(() => activeWords(packs), [packs, activeWords]);
@@ -929,7 +928,7 @@ ${promptInput.trim()}`;
         </Modal>
       )}
 
-      {/* ── Language Selection Modal (first visit) ── */}
+      {/* ── Language Selection Modal ── */}
       {langModal && (
         <div className="lang-overlay">
           <div className="lang-modal">
@@ -949,8 +948,8 @@ ${promptInput.trim()}`;
       )}
 
       {/* ── Floating language switcher ── */}
-      <button onClick={cycleLang} className="fab fab-lang">
-        {nextLang ? `${nextLang.flag} ${nextLang.code.toUpperCase()}` : "🌐"}
+      <button onClick={openLangModal} className="fab fab-lang">
+        {curLang ? curLang.flag : "🌐"}
       </button>
 
       {/* ── Floating dark mode ── */}
