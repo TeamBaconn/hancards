@@ -1,78 +1,207 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+/* ═══════════════════════════════════════════════════════════
+   HanCards – Design Tokens & Base Styles
+   ═══════════════════════════════════════════════════════════ */
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-html {
+/* ── Reset ── */
+*, *::before, *::after {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
 }
 
 body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
+  font-family: var(--font-sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+#root {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+/* ── Design Tokens ── */
+:root {
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', 'Fira Mono', 'Consolas', monospace;
+
+  --text-2xs: 0.58rem;
+  --text-xs: 0.7rem;
+  --text-sm: 0.82rem;
+  --text-base: 0.88rem;
+  --text-md: 0.92rem;
+  --text-lg: 1.05rem;
+  --text-xl: 1.1rem;
+  --text-2xl: 1.4rem;
+  --text-3xl: 2rem;
+
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-extrabold: 800;
+
+  --radius-xs: 2px;
+  --radius-sm: 5px;
+  --radius-md: 6px;
+  --radius-base: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-2xl: 14px;
+  --radius-3xl: 22px;
+  --radius-4xl: 28px;
+  --radius-full: 9999px;
+
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
+
+  /* Fixed colors (theme-independent) */
+  --color-score-low: #ff5566;
+  --color-score-mid: #ffb830;
+  --color-score-high: #58cc02;
+  --color-toggle-on: #4caf50;
+  --color-danger: #ff5566;
+  --color-white: #fff;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* ── Light Theme (Discord-inspired) ── */
+[data-theme="light"] {
+  --color-bg: #f2f3f5;
+  --color-surface: #ffffff;
+  --color-header-bg: #f4f4f2;
+  --color-header-border: #c4c9d4;
+
+  --color-text: #060607;
+  --color-text-secondary: #5c6070;
+  --color-text-muted: #b8bcc8;
+
+  --color-border: #c4c9d4;
+  --color-border-subtle: #d9dce3;
+
+  --color-toggle-bg: #d9dce3;
+  --color-toggle-active: #fff;
+
+  --color-input-bg: #f4f4f2;
+  --color-input-text: #060607;
+
+  --color-primary-bg: #1a1a1a;
+  --color-primary-text: #fff;
+  --color-ghost-border: #c4c9d4;
+  --color-ghost-text: #5c6070;
+
+  --color-kbd-bg: #d9dce3;
+  --color-kbd-text: #3a3d47;
+
+  --color-active-bg: #eaf5ea;
+  --color-active-border: #58cc02;
+  --color-active-text: #236b23;
+
+  --color-card-front-bg: #ffffff;
+  --color-card-front-border: #c4c9d4;
+  --shadow-card-front: 0 4px 16px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.08);
+  --color-card-back-bg: #eaf5ea;
+  --color-card-back-border: #58cc02;
+  --shadow-card-back: 0 6px 32px rgba(80,160,80,0.20);
+
+  --color-label-prompt: #5c6070;
+  --color-label-answer: #236b23;
+  --color-text-prompt: #060607;
+  --color-text-answer: #1a3a1a;
+
+  --color-success: #248a5e;
+
+  --color-modal-bg: #ffffff;
+  --color-overlay: rgba(0,0,0,0.60);
+  --color-overlay-heavy: rgba(0,0,0,0.75);
+
+  --color-fab-bg: #1a1a1a;
+  --color-fab-text: #fff;
+
+  --color-chart-line: rgba(0, 0, 0, 0.387);
+  --color-progress-track: #d0d3da;
+
+  --color-danger-border: #f8c0c8;
+  --color-edit-highlight: #eaf5ea;
+  --color-llm-btn: #e040fb;
 }
+
+/* ── Dark Theme ── */
+[data-theme="dark"] {
+  --color-bg: #0e0e0e;
+  --color-surface: #1e1e1e;                 /* was #161616 — lifted for separation */
+  --color-header-bg: #161616;              /* was #111 */
+  --color-header-border: #2a2a2a;          /* was #1e1e1e */
+
+  --color-text: #eaeaea;
+  --color-text-secondary: #888;
+  --color-text-muted: #666;
+
+  --color-border: #2e2e2e;                  /* was #252525 */
+  --color-border-subtle: #2a2a2a;          /* was #262626 */
+
+  --color-toggle-bg: #222;                  /* was #181818 */
+  --color-toggle-active: #303030;          /* was #282828 */
+
+  --color-input-bg: #1e1e1e;              /* was #161616 */
+  --color-input-text: #eaeaea;
+
+  --color-primary-bg: #e8e8e8;
+  --color-primary-text: #111;
+  --color-ghost-border: #363636;          /* was #2e2e2e */
+  --color-ghost-text: #999;
+
+  --color-kbd-bg: #2a2a2a;                  /* was #222 */
+  --color-kbd-text: #ccc;
+
+  --color-active-bg: #0c1f0c;
+  --color-active-border: #58cc02;          /* was #1a3a1a — slightly more visible */
+  --color-active-text: #6dde6d;
+
+  --color-card-front-bg: #1e1e1e;          /* was #161616 */
+  --color-card-front-border: #303030;      /* was #252525 */
+  --shadow-card-front: 0 6px 32px rgba(0,0,0,0.55), 0 1px 4px rgba(0,0,0,0.3);  /* was 0.45 */
+  --color-card-back-bg: #0c1f0c;
+  --color-card-back-border: #58cc02;       /* was #1a3a1a */
+  --shadow-card-back: 0 6px 32px rgba(10,40,10,0.85);
+
+  --color-label-prompt: #b6b6b6;
+  --color-label-answer: #6dde6d;
+  --color-text-prompt: #eaeaea;
+  --color-text-answer: #eaffea;
+
+  --color-success: #5ddb9e;
+
+  --color-modal-bg: #242424;               /* was #1c1c1c */
+  --color-overlay: rgba(0,0,0,0.65);       /* was 0.55 — slightly stronger */
+  --color-overlay-heavy: rgba(0,0,0,0.78); /* was 0.7 */
+
+  --color-fab-bg: #e8e8e8;
+  --color-fab-text: #111;
+
+  --color-chart-line: rgba(255, 255, 255, 0.362); /* was 0.18 — subtler on darker bg */
+  --color-progress-track: #2e2e2e;         /* was #252525 */
+
+  --color-danger-border: #3a1515;
+  --color-edit-highlight: #1a2a1a;
+  --color-llm-btn: #d72660;
+}
+
+/* ── Scrollbar ── */
+.ps::-webkit-scrollbar { width: 4px; height: 4px; }
+.ps::-webkit-scrollbar-track { background: transparent; }
+.ps::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.2); border-radius: var(--radius-full); }
+.ps::-webkit-scrollbar-thumb:hover { background: rgba(128,128,128,0.4); }

@@ -4,6 +4,7 @@
   },
   "nav": {
     "study": "Study",
+    "quiz": "Quiz",
     "manage": "Vocabulary",
     "about": "About"
   },
@@ -95,6 +96,13 @@
   "about": { 
     "description": "HanCards is a simple flashcard app, working offline to help you learn Korean vocabulary. You can add your own new packs via CSV using the template, or study on the available packs. Web created by",
     "copyright": "© {{year}} Team Bacon. All rights reserved."
+  },
+  "quiz": {
+    "mixed": "Mixed",
+    "toKorean": "To Korean",
+    "fromKorean": "From Korean",
+    "question": "What does this mean?",
+    "noWords": "Need at least 2 active words. Go to Vocabulary and enable some packs!"
   },
   "loading": "Loading…"
 }

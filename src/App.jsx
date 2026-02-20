@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
   STORAGE_KEY, LANG_KEY, SCORE, scoreColor,
   LANGUAGES, LANG_CYCLE, LANG_MAP,
-  theme as makeTheme, styles as makeStyles,
-  CARD_FONT_STEPS, SCROLLBAR_CSS, CSV_HINT,
+  CARD_FONT_STEPS, CSV_HINT,
 } from "./config";
+import Quiz from "./Quiz";
+import "./App.css";
 
 /* ════════════════════════════════════════════════════════════
    Data helpers
@@ -137,9 +138,8 @@ const TrashIcon = () => (
    Progress Chart
    ════════════════════════════════════════════════════════════ */
 
-function ProgressChart({ packs, scores, dark }) {
+function ProgressChart({ packs, scores }) {
   const { t: tr } = useTranslation();
-  const t = makeTheme(dark);
 
   const byCategory = {};
   packs.forEach(p => {
@@ -159,12 +159,12 @@ function ProgressChart({ packs, scores, dark }) {
     })
   }));
 
-  const barWidth = 4;
+  const barWidth = 6;
   const barGap = 2;
-  const groupGap = 10;
-  const chartHeight = 36;
-  const topPad = 6;
-  const bottomPad = 16;
+  const groupGap = 20;
+  const chartHeight = 28;
+  const topPad = 5;
+  const bottomPad = 10;
 
   let x = 16;
   const groups = packData.map(group => {
@@ -183,15 +183,15 @@ function ProgressChart({ packs, scores, dark }) {
   const svgHeight = chartHeight + topPad + bottomPad;
 
   return (
-    <div style={{ background: t.rowBg, borderRadius: 12, border: `1px solid ${t.border}`, padding: "0.6rem 0.8rem", overflowX: "auto", height: "100%", boxSizing: "border-box" }}>
-      <div style={{ fontSize: "0.58rem", color: t.subText, textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 600, marginBottom: 3 }}>{tr('manage.progress')}</div>
+    <div className="progress-chart">
+      <div className="chart-title">{tr('manage.progress')}</div>
       <svg width="100%" viewBox={`0 0 ${svgWidth} ${svgHeight}`} preserveAspectRatio="xMinYMid meet" style={{ display: "block" }}>
         {[0, 50, 100].map(v => {
           const y = topPad + chartHeight - (v / 100) * chartHeight;
           return (
             <g key={v}>
-              <line x1={12} x2={svgWidth - 2} y1={y} y2={y} stroke={dark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.10)"} strokeDasharray={v === 0 ? "none" : "2,4"} strokeWidth="0.4" />
-              <text x={1} y={y + 1.5} fontSize="3.5" fill={t.subText}>{v}</text>
+              <line x1={12} x2={svgWidth - 5} y1={y} y2={y} style={{ stroke: "var(--color-chart-line)" }} strokeDasharray={v === 0 ? "none" : "2,4"} strokeWidth="0.4" />
+              <text x={1} y={y + 1.5} fontSize="3.5" style={{ fill: "var(--color-text-secondary)" }}>{v}</text>
             </g>
           );
         })}
@@ -207,14 +207,14 @@ function ProgressChart({ packs, scores, dark }) {
                 </rect>
               );
             })}
-            <text x={group.x + group.width / 2} y={topPad + chartHeight + 9} textAnchor="middle" fontSize="4.5" fontWeight="600" fill={t.subText}>{group.cat}</text>
+            <text x={group.x + group.width / 2} y={topPad + chartHeight + 9} textAnchor="middle" fontSize="4.5" fontWeight="600" style={{ fill: "var(--color-text-secondary)" }}>{group.cat}</text>
           </g>
         ))}
       </svg>
-      <div style={{ display: "flex", gap: 12, marginTop: 6, fontSize: "0.72rem", color: t.subText, justifyContent: "center" }}>
-        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: "#ff5566" }} />{tr('manage.learning')}</span>
-        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: "#ffb830" }} />{tr('manage.familiar')}</span>
-        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: "#58cc02" }} />{tr('manage.mastered')}</span>
+      <div className="chart-legend">
+        <span className="chart-legend-item"><span className="chart-legend-dot" style={{ background: "#ff5566" }} />{tr('manage.learning')}</span>
+        <span className="chart-legend-item"><span className="chart-legend-dot" style={{ background: "#ffb830" }} />{tr('manage.familiar')}</span>
+        <span className="chart-legend-item"><span className="chart-legend-dot" style={{ background: "#58cc02" }} />{tr('manage.mastered')}</span>
       </div>
     </div>
   );
@@ -225,10 +225,9 @@ function ProgressChart({ packs, scores, dark }) {
    Uses a ref to measure and shrink font until text fits.
    ════════════════════════════════════════════════════════════ */
 
-function FlipCard({ front, back, flipped, onFlip, onNext, dark }) {
+function FlipCard({ front, back, flipped, onFlip, onNext }) {
   const HALF = 110;
   const { t: tr } = useTranslation();
-  const t = makeTheme(dark);
 
   const [text, setText] = useState(front || "");
   const [label, setLabel] = useState("prompt");
@@ -313,46 +312,32 @@ function FlipCard({ front, back, flipped, onFlip, onNext, dark }) {
   }, [flipped, front, back]);
 
   const isBack = flipped ? (phase !== "out") : (phase === "out");
-  const bgColor    = isBack ? t.cardBack : t.cardFront;
-  const borderClr  = isBack ? t.cardBorder : t.cardFrontBorder;
-  const boxShadow  = isBack ? t.cardShadow : t.cardFrontShadow;
-  const labelClr   = isBack ? t.labelAnswer : t.labelPrompt;
-  const textClr    = isBack ? t.textAnswer  : t.textPrompt;
+
+  const cardClass = [
+    "flip-card",
+    isBack && "flip-card--back",
+    phase === "out" && "flip-card--out",
+  ].filter(Boolean).join(" ");
 
   return (
-    <div ref={cardRef} onClick={handleClick} style={{
-      cursor: "pointer", width: "100%", maxWidth: 680, margin: "0 auto", height: 340,
-      userSelect: "none", background: bgColor, borderRadius: 28,
-      border: `3px solid ${borderClr}`, boxShadow,
-      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-      padding: "1rem 0.25rem", boxSizing: "border-box",
-      transition: `background 0.2s, border 0.2s, box-shadow 0.2s, transform ${HALF}ms cubic-bezier(.4,0,.2,1)`,
-      transform: `scaleX(${phase === "out" ? 0 : 1})`,
-      overflow: "hidden",
-    }}>
-      <div style={{ fontSize: "0.85rem", letterSpacing: 3, color: labelClr, marginBottom: 20, textTransform: "uppercase", fontWeight: 500 }}>{labelText}</div>
-      <div ref={textRef} style={{
-        fontSize, fontWeight: 700, color: textClr,
-        textAlign: "center", lineHeight: 1.3, width: "100%",
-        wordBreak: "keep-all", overflowWrap: "normal", whiteSpace: "normal",
-        overflow: "hidden",
-      }}>{text}</div>
+    <div ref={cardRef} onClick={handleClick} className={cardClass}>
+      <div className="flip-card-label">{labelText}</div>
+      <div ref={textRef} className="flip-card-text" style={{ fontSize }}>{text}</div>
     </div>
   );
 }
 
 /* ────────────────────── Modal ────────────────────────────── */
 
-function Modal({ title, onClose, children, dark }) {
-  const t = makeTheme(dark);
+function Modal({ title, onClose, children }) {
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem" }}>
-      <div style={{ background: dark ? "#1c1c1c" : "#fff", borderRadius: 14, width: "100%", maxWidth: 800, maxHeight: "86vh", display: "flex", flexDirection: "column", boxShadow: "0 8px 32px rgba(0,0,0,0.28)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1.4rem 1.8rem", borderBottom: `1px solid ${dark ? "#262626" : "#efefef"}`, flexShrink: 0 }}>
-          <span style={{ fontWeight: 700, fontSize: "1.05rem", color: t.text }}>{title}</span>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "1.2rem", color: t.subText, lineHeight: 1 }}>✕</button>
+    <div className="modal-overlay">
+      <div className="modal">
+        <div className="modal-header">
+          <span className="modal-title">{title}</span>
+          <button onClick={onClose} className="modal-close">✕</button>
         </div>
-        <div className="ps" style={{ overflowY: "auto", padding: "1.6rem 1.8rem", flex: 1 }}>{children}</div>
+        <div className="modal-body ps">{children}</div>
       </div>
     </div>
   );
@@ -396,13 +381,7 @@ export default function App() {
   useEffect(() => { scoresRef.current = scores; }, [scores]);
   useEffect(() => { screenRef.current = screen; }, [screen]);
 
-  useEffect(() => {
-    const id = "ps-style";
-    if (!document.getElementById(id)) {
-      const s = document.createElement("style"); s.id = id; s.textContent = SCROLLBAR_CSS;
-      document.head.appendChild(s);
-    }
-  }, []);
+
 
   const activeWords = useCallback((ps = packsRef.current) =>
     ps.filter(p => p.enabled).flatMap(p => p.words), []);
@@ -639,7 +618,7 @@ ${promptInput.trim()}`;
   const nextLang = LANG_MAP[LANG_CYCLE[(LANG_CYCLE.indexOf(i18n.language) + 1) % LANG_CYCLE.length]];
 
   /* ── Derived values ── */
-  const allWords = activeWords(packs);
+  const allWords = useMemo(() => activeWords(packs), [packs, activeWords]);
   const card = allWords[cardIdx];
   const front = card ? (mode === "eng" ? card.english : card.korean) : "";
   const back  = card ? (mode === "eng" ? card.korean  : card.english) : "";
@@ -654,101 +633,106 @@ ${promptInput.trim()}`;
   const avgScore = allWords.length ? Math.round(allWords.reduce((a, w) => a + (scores[w.korean] ?? SCORE.defaultScore), 0) / allWords.length) : 0;
   const cardScore = card ? (scores[card.korean] ?? SCORE.defaultScore) : 0;
 
-  /* ── Theme & styles ── */
-  const D = dark;
-  const t = makeTheme(D);
-  const st = makeStyles(t);
-
   if (screen === "loading") return (
-    <div style={{ fontFamily: "system-ui", background: t.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", width: "100%", boxSizing: "border-box" }}>
-      <p style={{ color: t.subText }}>{tr('loading')}</p>
+    <div className="app loading-screen" data-theme={dark ? "dark" : "light"}>
+      <p className="text-secondary">{tr('loading')}</p>
     </div>
   );
 
   /* ════════════════════════  RENDER  ════════════════════════ */
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", background: t.bg, height: "100vh", color: t.text, width: "100%", maxWidth: "100%", overflowX: "hidden", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+    <div className="app" data-theme={dark ? "dark" : "light"}>
 
       {/* ── Header ── */}
-      <div style={{ background: t.headerBg, borderBottom: `1px solid ${t.headerBorder}`, zIndex: 50, width: "100%", boxSizing: "border-box", flexShrink: 0 }}>
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "stretch", minHeight: 54, width: "100%", boxSizing: "border-box" }}>
-          <div style={{ padding: "0 1.2rem", display: "flex", alignItems: "center", fontWeight: 700, fontSize: "1rem", flex: "1 1 auto", minHeight: 48 }}>
-            <img src={(import.meta.env.BASE_URL || '/') + 'icon.png'} alt="App Icon" style={{ width: 28, height: 28, marginRight: 10, verticalAlign: "middle", flexShrink: 0 }} />
-            한카드 <span style={{ color: t.subText, fontWeight: 400, marginLeft: 6 }}>HanCards</span>
+      <header className="header">
+        <div className="header-inner">
+          <div className="header-brand">
+            <img src={(import.meta.env.BASE_URL || '/') + 'icon.png'} alt="App Icon" className="header-brand-icon" />
+            한카드 <span className="header-brand-sub">HanCards</span>
           </div>
-          <div style={{ display: "flex", flexShrink: 0, minHeight: 42 }}>
-            {[["study", tr('nav.study')], ["manage", tr('nav.manage')]].map(([s, lbl]) => (
-              <button key={s} onClick={() => setScreen(s)} style={{
-                ...st.btnBase, borderRadius: 0, padding: "0 1.2rem", fontSize: "0.88rem",
-                background: "transparent", color: screen === s ? t.text : t.subText,
-                borderBottom: screen === s ? `2px solid ${t.primaryBg}` : "2px solid transparent",
-                fontWeight: screen === s ? 600 : 400, whiteSpace: "nowrap",
-              }}>{lbl}</button>
+          <nav className="nav-tabs">
+            {[["quiz", tr('nav.quiz')], ["study", tr('nav.study')], ["manage", tr('nav.manage')], ["about", tr('nav.about')]].map(([s, lbl]) => (
+              <button key={s} onClick={() => setScreen(s)} className={`nav-tab ${screen === s ? 'nav-tab--active' : ''}`}>{lbl}</button>
             ))}
-            <button onClick={() => setScreen("about")} style={{
-              ...st.btnBase, borderRadius: 0, padding: "0 1.2rem", fontSize: "0.88rem",
-              background: "transparent", color: screen === "about" ? t.text : t.subText,
-              borderBottom: screen === "about" ? `2px solid ${t.primaryBg}` : "2px solid transparent",
-              fontWeight: screen === "about" ? 600 : 400, whiteSpace: "nowrap",
-            }}>{tr('nav.about')}</button>
-          </div>
+          </nav>
         </div>
-      </div>
+      </header>
 
       {/* ── Content area ── */}
-      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: 0 }}>
+      <div className="app-content">
 
         {/* ── ABOUT ── */}
         {screen === "about" && (
-          <div style={{ padding: "3rem 2rem", maxWidth: 800, margin: "0 auto", textAlign: "center" }}>
-            <img src={(import.meta.env.BASE_URL || '/') + 'icon.png'} alt="App Icon" style={{ width: 300, height: 300 }} />
-            <h2 style={{ fontWeight: 800, fontSize: "2rem", marginBottom: 10 }}>HanCards</h2>
-            <p style={{ fontSize: "1.1rem", color: t.subText, marginBottom: 24 }}>
+          <div className="about-screen">
+            <img src={(import.meta.env.BASE_URL || '/') + 'icon.png'} alt="App Icon" className="about-icon" />
+            <h2 className="about-title">HanCards</h2>
+            <p className="about-description">
               {tr('about.description')}
-              <a href="https://bacongamedev.com/posts/portfolio/" target="_blank" rel="noopener noreferrer" style={{ color: t.text, textDecoration: "underline", marginLeft: 4 }}>Bacon</a>
+              <a href="https://bacongamedev.com/posts/portfolio/" target="_blank" rel="noopener noreferrer" className="about-link">Bacon</a>
             </p>
-            <div style={{ fontSize: "0.95rem", color: t.mutedText, marginTop: 30 }}>
+            <div className="about-copyright">
               {tr('about.copyright', { year: new Date().getFullYear() })}
             </div>
           </div>
         )}
 
+        {/* ── QUIZ ── */}
+        {screen === "quiz" && (
+          <Quiz
+            allWords={allWords}
+            scores={scores}
+            enabledCount={enabledCount}
+            onScoreUpdate={(key, newScore) => {
+              const s = { ...scores, [key]: newScore };
+              setScores(s); scoresRef.current = s;
+              persist(packs, s);
+            }}
+          />
+        )}
+
         {/* ── STUDY ── */}
         {screen === "study" && (
-          <div style={{ padding: "2rem 2rem", margin: 0 }}>
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: "2.5rem" }}>
-              <div style={{ display: "flex", background: t.toggleBg, borderRadius: 10, padding: 3 }}>
+          <div className="study-screen">
+            <div className="mode-toggle">
+              <div className="mode-toggle-group">
                 {[['eng', tr('study.toKorean')], ['kor', tr('study.fromKorean')]].map(([v, label]) => (
                   <button key={v} onClick={() => { setMode(v); setFlipped(false); }}
                     title={v === 'eng' ? tr('study.toKoreanTitle') : tr('study.fromKoreanTitle')}
-                    style={{ ...st.btnBase, padding: "0.5rem 1.1rem", fontSize: "1.05rem", lineHeight: 1, display: "flex", alignItems: "center", gap: 4, background: mode === v ? t.toggleActive : "transparent", color: mode === v ? t.text : t.subText, boxShadow: mode === v ? "0 1px 4px rgba(0,0,0,0.25)" : "none" }}>
+                    className={`mode-toggle-btn ${mode === v ? 'mode-toggle-btn--active' : ''}`}>
                     {label}
                   </button>
                 ))}
               </div>
             </div>
             {allWords.length === 0 ? (
-              <div style={{ textAlign: "center", color: t.subText, marginTop: "5rem" }}>
-                <div style={{ fontSize: "2.5rem", marginBottom: 16 }}>📚</div>
-                <p>{tr('study.noPacks')} <strong style={{ color: t.text, cursor: "pointer" }} onClick={() => setScreen("manage")}>{tr('study.noPacksManage')}</strong> {tr('study.noPacksEnd')}</p>
+              <div className="empty-state">
+                <div className="empty-state-icon">📚</div>
+                <p>{tr('study.noPacks')} <strong className="empty-state-link" onClick={() => setScreen("manage")}>{tr('study.noPacksManage')}</strong> {tr('study.noPacksEnd')}</p>
               </div>
             ) : card ? (
               <>
                 <FlipCard front={front} back={back} flipped={flipped}
                   onFlip={() => { setFlipped(f => !f); didFlipRef.current = true; }}
-                  onNext={nextCard} dark={dark} />
-                <div style={{ textAlign: "center", marginTop: 14, lineHeight: 2 }}>
-                  <div style={{ fontSize: "0.82rem", color: t.subText, fontWeight: 500 }}>
-                    {tr('study.cardTipTap')} <strong style={{ color: t.text }}>{tr('study.cardTipUpper')}</strong> {tr('study.cardTipFlip')} <span style={{ margin: "0 0.5em" }}>·</span> {tr('study.cardTipTap')} <strong style={{ color: t.text }}>{tr('study.cardTipLower')}</strong> {tr('study.cardTipNext')}
-                  </div>
-                  <div style={{ fontSize: "0.82rem", color: t.subText, fontWeight: 500 }}>
-                    <kbd style={st.kbdStyle}>↑</kbd> <kbd style={st.kbdStyle}>↓</kbd> <kbd style={st.kbdStyle}>Space</kbd> <strong style={{ color: t.text }}>{tr('study.flip')}</strong> <span style={{ margin: "0 0.5em" }}>·</span> <kbd style={st.kbdStyle}>→</kbd> <kbd style={st.kbdStyle}>Enter</kbd> <strong style={{ color: t.text }}>{tr('study.next')}</strong>
-                  </div>
-                </div>
-                <div style={{ display: "flex", justifyContent: "center", gap: 32, marginTop: "1.5rem", fontSize: "0.78rem", color: t.mutedText }}>
+                  onNext={nextCard} />
+                <div className="study-stats">
                   <span>{allWords.length} {tr('study.words')} · {enabledCount} {enabledCount !== 1 ? tr('study.packs') : tr('study.pack')}</span>
                   <span>{tr('study.avgScore')}: <strong style={{ color: scoreColor(avgScore) }}>{avgScore}%</strong></span>
                   <span>{tr('study.cardScore')}: <strong style={{ color: scoreColor(cardScore) }}>{cardScore}%</strong></span>
+                </div>
+                {/* Card tips moved to bottom left and split into lines */}
+                <div className="card-tips card-tips-bottom-left card-tips-align-left">
+                  <div className="card-tip-line">
+                    <kbd className="kbd">→</kbd> <kbd className="kbd">Enter</kbd> {tr('study.next')}
+                  </div>
+                  <div className="card-tip-line">
+                    <kbd className="kbd">↑</kbd> <kbd className="kbd">↓</kbd> <kbd className="kbd">Space</kbd> {tr('study.flip')}
+                  </div>
+                  <div className="card-tip-line">
+                    {tr('study.cardTipTap')} <kbd className="kbd">{tr('study.cardTipUpper')}</kbd> {tr('study.cardTipFlip')}
+                  </div>
+                  <div className="card-tip-line">
+                    {tr('study.cardTipTap')} <kbd className="kbd">{tr('study.cardTipLower')}</kbd> {tr('study.cardTipNext')}
+                  </div>
                 </div>
               </>
             ) : null}
@@ -757,133 +741,82 @@ ${promptInput.trim()}`;
 
         {/* ── MANAGE ── */}
         {screen === "manage" && (
-          <div style={{ padding: "1.5rem 2rem", margin: 0 }}>
+          <div className="manage-screen">
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1.5rem", alignItems: "stretch" }}>
+            <div className="manage-top">
               {packs.length > 0 && (
-                <div style={{ flex: "1 1 380px", minWidth: 0 }}>
-                  <ProgressChart packs={packs} scores={scores} dark={dark} />
-                </div>
+                <ProgressChart packs={packs} scores={scores} />
               )}
-              <div
-  style={{
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "0.5rem",
-    flex: "1 1 260px",
-    alignContent: "stretch",
-    alignItems: "stretch",
-  }}
->
-  {[
-    [tr("manage.categories"), `${Object.keys(packsByCategory).length}`],
-    [tr("manage.packs"), `${packs.length}`],
-    [tr("manage.activePacks"), `${enabledCount} / ${packs.length}`],
-    [tr("manage.words"), `${packs.reduce((a, p) => a + p.words.length, 0)}`],
-    [tr("manage.activeWords"), `${allWords.length}`],
-  ].map(([lbl, val]) => (
-    <div
-      key={lbl}
-      style={{
-        background: t.rowBg,
-        borderRadius: 10,
-        padding: "0.7rem 0.6rem",
-        border: `1px solid ${t.border}`,
-        flex: "1 1 25%",
-        minWidth: 90,
-
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-        textAlign: "center",
-      }}
-    >
-      <div
-        style={{
-          fontSize: "clamp(1rem, 1.5vw, 1.6rem)",
-          fontWeight: 700,
-          color: t.text,
-          lineHeight: 1,
-        }}
-      >
-        {val}
-      </div>
-
-      <div
-        style={{
-          fontSize: "clamp(0.55rem, 0.7vw, 0.75rem)",
-          color: t.subText,
-          marginTop: 4,
-        }}
-      >
-        {lbl}
-      </div>
-    </div>
-  ))}
-</div>
-
+              <div className="stats-grid">
+                {[
+                  [tr("manage.categories"), `${Object.keys(packsByCategory).length}`],
+                  [tr("manage.packs"), `${packs.length}`],
+                  [tr("manage.activePacks"), `${enabledCount} / ${packs.length}`],
+                  [tr("manage.words"), `${packs.reduce((a, p) => a + p.words.length, 0)}`],
+                  [tr("manage.activeWords"), `${allWords.length}`],
+                ].map(([lbl, val]) => (
+                  <div key={lbl} className="stat-card">
+                    <div className="stat-value">{val}</div>
+                    <div className="stat-label">{lbl}</div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Actions */}
-            <div style={{ display: "flex", gap: 10, marginBottom: "2rem", flexWrap: "wrap", alignItems: "center" }}>
+            <div className="actions-bar">
               <input value={newPackName} onChange={e => setNewPackName(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && addPack()}
-                placeholder={tr('manage.newPackPlaceholder')} style={{ ...st.inputStyle, flex: "1 1 180px", width: "auto" }} />
-              <button style={st.primaryBtn} onClick={addPack}>{tr('manage.addPack')}</button>
-              <button style={st.ghostBtn} onClick={() => { setImportModal(true); setImportMsg(""); setImportText(""); }}>{tr('manage.csvImport')}</button>
-              <button style={{ ...st.ghostBtn, color: t.danger, borderColor: D ? "#3a1515" : "#fdd" }} onClick={deleteUserData}>{tr('manage.deleteUserData')}</button>
+                placeholder={tr('manage.newPackPlaceholder')} className="input" />
+              <button className="btn btn-primary" onClick={addPack}>{tr('manage.addPack')}</button>
+              <button className="btn btn-ghost" onClick={() => { setImportModal(true); setImportMsg(""); setImportText(""); }}>{tr('manage.csvImport')}</button>
+              <button className="btn btn-ghost btn-danger" onClick={deleteUserData}>{tr('manage.deleteUserData')}</button>
             </div>
 
             {/* Pack grid */}
             {packs.length === 0 ? (
-              <div style={{ textAlign: "center", color: t.subText, padding: "4rem 0" }}>{tr('manage.noPacks')}</div>
+              <div className="no-packs">{tr('manage.noPacks')}</div>
             ) : (
               <div className="ps" style={{ paddingRight: 4 }}>
                 {Object.entries(packsByCategory).map(([cat, catPacks]) => {
                   const hasEnabled = catPacks.some(p => p.enabled);
                   const isExpanded = expandedCats[cat] !== undefined ? expandedCats[cat] : hasEnabled;
+                  const allCatEnabled = catPacks.every(p => p.enabled);
                   return (
-                    <div key={cat} style={{ marginBottom: 28, paddingBottom: 28, borderBottom: `1px solid ${t.border}` }}>
-                      <div style={{ display: "flex", alignItems: "center", marginBottom: isExpanded ? 8 : 0, gap: 12, cursor: "pointer", userSelect: "none" }}
+                    <div key={cat} className="category-section">
+                      <div className={`category-header ${isExpanded ? 'category-header--expanded' : ''}`}
                         onClick={(e) => { if (e.target.closest('button')) return; setExpandedCats(prev => ({ ...prev, [cat]: !isExpanded })); }}>
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={t.subText} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "transform 0.2s", transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)", flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
-                          <span style={{ fontWeight: 700, fontSize: "1.05rem", color: t.text }}>{cat}</span>
+                        <span className="category-name-group">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`category-chevron text-secondary ${isExpanded ? 'category-chevron--expanded' : ''}`}><polyline points="9 18 15 12 9 6"/></svg>
+                          <span className="category-name">{cat}</span>
                         </span>
-                        <button onClick={() => toggleCategory(cat)} style={{
-                          cursor: "pointer", width: 38, height: 22, borderRadius: 12,
-                          background: catPacks.every(p => p.enabled) ? "#4caf50" : t.border,
-                          flexShrink: 0, transition: "background 0.2s", marginLeft: 4,
-                          border: 'none', padding: 0, display: 'flex', alignItems: 'center',
-                          outline: 'none', position: 'static',
-                        }} aria-label={tr('manage.toggleCategory', { cat })}>
-                          <div style={{ position: "relative", top: 0, left: catPacks.every(p => p.enabled) ? 18 : 3, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.25)" }} />
+                        <button onClick={() => toggleCategory(cat)} className={`toggle-cat ${allCatEnabled ? 'toggle-cat--on' : ''}`} aria-label={tr('manage.toggleCategory', { cat })}>
+                          <div className="toggle-cat-knob" />
                         </button>
-                        <span style={{ fontSize: "0.72rem", color: t.subText, marginLeft: 2 }}>{catPacks.length} {catPacks.length !== 1 ? tr('manage.packPlural') : tr('manage.packSingular')}</span>
+                        <span className="category-meta">{catPacks.length} {catPacks.length !== 1 ? tr('manage.packPlural') : tr('manage.packSingular')}</span>
                         <button onClick={() => deleteCategory(cat)} title={`Delete all packs in ${cat}`}
-                          style={{ ...st.iconBtn, color: t.danger, marginLeft: "auto" }}><TrashIcon /></button>
+                          className="btn-icon text-danger category-delete"><TrashIcon /></button>
                       </div>
                       {isExpanded && (
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12 }}>
+                        <div className="pack-grid">
                           {catPacks.map(p => {
                             const packMedian = Math.round(medianOf(p.words.map(w => scores[w.korean] ?? SCORE.defaultScore)));
                             return (
-                              <div key={p.id} style={{ background: p.enabled ? t.activeBg : t.rowBg, border: `1px solid ${p.enabled ? t.activeBorder : t.border}`, borderRadius: 14, padding: "0.9rem", display: "flex", flexDirection: "column", gap: 8, transition: "background 0.2s, border-color 0.2s", minWidth: 0 }}>
-                                <div style={{ fontWeight: 600, fontSize: "0.82rem", color: p.enabled ? t.activeText : t.text, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={p.name}>{p.name}</div>
-                                <div style={{ fontSize: "0.7rem", color: t.subText }}>{p.words.length} {p.words.length !== 1 ? tr('manage.wordPlural') : tr('manage.word')}</div>
-                                <div style={{ height: 3, borderRadius: 2, background: D ? "#252525" : "#e0e0e0", overflow: "hidden" }}>
-                                  <div style={{ height: "100%", width: `${packMedian}%`, minWidth: packMedian > 0 ? 2 : 0, borderRadius: 2, background: scoreColor(packMedian), transition: "width 0.3s" }} />
+                              <div key={p.id} className={`pack-card ${p.enabled ? 'pack-card--active' : ''}`}>
+                                <div className="pack-name" title={p.name}>{p.name}</div>
+                                <div className="pack-word-count">{p.words.length} {p.words.length !== 1 ? tr('manage.wordPlural') : tr('manage.word')}</div>
+                                <div className="pack-progress">
+                                  <div className="pack-progress-fill" style={{ width: `${packMedian}%`, minWidth: packMedian > 0 ? 2 : 0, background: scoreColor(packMedian) }} />
                                 </div>
-                                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                  <div onClick={() => togglePack(p.id)} style={{ cursor: "pointer", width: 34, height: 20, borderRadius: 10, background: p.enabled ? "#4caf50" : t.border, position: "relative", flexShrink: 0, transition: "background 0.2s" }}>
-                                    <div style={{ position: "absolute", top: 2, left: p.enabled ? 16 : 2, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.25)" }} />
+                                <div className="pack-actions">
+                                  <div onClick={() => togglePack(p.id)} className={`toggle ${p.enabled ? 'toggle--on' : ''}`}>
+                                    <div className="toggle-knob" />
                                   </div>
-                                  <div style={{ flex: 1 }} />
+                                  <div className="pack-actions-spacer" />
                                   <button title="Edit" onClick={() => { setEditingPackId(p.id); setWordInput({ korean: "", english: "" }); setEditWordIdx(null); setAddWordMsg(""); }}
-                                    style={{ ...st.iconBtn, color: t.subText }}><EditIcon /></button>
+                                    className="btn-icon text-secondary"><EditIcon /></button>
                                   <button title="Delete" onClick={() => deletePack(p.id)}
-                                    style={{ ...st.iconBtn, color: t.danger }}><TrashIcon /></button>
+                                    className="btn-icon text-danger"><TrashIcon /></button>
                                 </div>
                               </div>
                             );
@@ -901,56 +834,56 @@ ${promptInput.trim()}`;
 
       {/* ── EDIT PACK MODAL ── */}
       {editingPackId && editPack && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem" }}>
-          <div style={{ background: D ? "#1c1c1c" : "#fff", borderRadius: 14, width: "100%", maxWidth: 800, maxHeight: "86vh", display: "flex", flexDirection: "column", boxShadow: "0 8px 32px rgba(0,0,0,0.28)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1.4rem 1.8rem", borderBottom: `1px solid ${t.border}`, flexShrink: 0 }}>
-              <span style={{ fontWeight: 700, fontSize: "1.05rem", color: t.text }}>{editPack.name}</span>
-              <button onClick={() => setEditingPackId(null)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "1.2rem", color: t.subText, lineHeight: 1 }}>✕</button>
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <span className="modal-title">{editPack.name}</span>
+              <button onClick={() => setEditingPackId(null)} className="modal-close">✕</button>
             </div>
-            <div style={{ padding: "1.4rem 1.8rem", borderBottom: `1px solid ${t.border}`, flexShrink: 0 }}>
-              <div style={st.sectionLabel}>{tr('editPack.renamePack')}</div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <input defaultValue={editPack.name} id="renameInput" style={{ ...st.inputStyle, flex: 1 }} />
-                <button style={st.primaryBtn} onClick={() => { const v = document.getElementById("renameInput").value.trim(); if (v) renamePack(editingPackId, v); }}>{tr('editPack.save')}</button>
+            <div className="modal-section">
+              <div className="section-label">{tr('editPack.renamePack')}</div>
+              <div className="rename-row">
+                <input defaultValue={editPack.name} id="renameInput" className="input" />
+                <button className="btn btn-primary" onClick={() => { const v = document.getElementById("renameInput").value.trim(); if (v) renamePack(editingPackId, v); }}>{tr('editPack.save')}</button>
               </div>
             </div>
-            <div className="ps" style={{ flex: 1, overflowY: "auto", padding: "1.4rem 1.8rem" }}>
-              <div style={st.sectionLabel}>{tr('editPack.wordsLabel', { count: editPack.words.length })}</div>
-              {editPack.words.length === 0 && <div style={{ color: t.mutedText, fontSize: "0.85rem", padding: "0.5rem 0" }}>{tr('editPack.noWords')}</div>}
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="modal-scroll ps">
+              <div className="section-label">{tr('editPack.wordsLabel', { count: editPack.words.length })}</div>
+              {editPack.words.length === 0 && <div className="no-words">{tr('editPack.noWords')}</div>}
+              <div className="words-list">
                 {editPack.words.map((w, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: editWordIdx === i ? (D ? "#1a2a1a" : "#f0faf0") : t.rowBg, borderRadius: 8, padding: "0.6rem 0.9rem", fontSize: "0.85rem", border: `1px solid ${editWordIdx === i ? t.activeBorder : t.border}` }}>
-                    <span style={{ flex: 1 }}>
-                      <strong style={{ color: t.text }}>{w.korean}</strong>
-                      <span style={{ color: t.mutedText, margin: "0 8px" }}>·</span>
-                      <span style={{ color: t.subText }}>{w.english}</span>
+                  <div key={i} className={`word-row ${editWordIdx === i ? 'word-row--editing' : ''}`}>
+                    <span className="word-content">
+                      <strong className="word-korean">{w.korean}</strong>
+                      <span className="word-separator">·</span>
+                      <span className="word-translation">{w.english}</span>
                     </span>
-                    <span style={{ fontSize: "0.7rem", color: scoreColor(scores[w.korean] ?? SCORE.defaultScore), fontWeight: 600, minWidth: 28, textAlign: "right" }}>{scores[w.korean] ?? SCORE.defaultScore}%</span>
+                    <span className="word-score" style={{ color: scoreColor(scores[w.korean] ?? SCORE.defaultScore) }}>{scores[w.korean] ?? SCORE.defaultScore}%</span>
                     <button onClick={() => { setEditWordIdx(i); setWordInput({ korean: w.korean, english: w.english }); }}
-                      style={{ ...st.iconBtn, color: t.subText }}><EditIcon /></button>
+                      className="btn-icon text-secondary"><EditIcon /></button>
                     <button onClick={() => removePackWord(i)}
-                      style={{ ...st.iconBtn, color: t.danger }}><TrashIcon /></button>
+                      className="btn-icon text-danger"><TrashIcon /></button>
                   </div>
                 ))}
               </div>
             </div>
-            <div style={{ borderTop: `1px solid ${t.border}`, padding: "1.2rem 1.8rem", flexShrink: 0 }}>
-              <div style={st.sectionLabel}>{editWordIdx !== null ? tr('editPack.editWord') : tr('editPack.addWord')}</div>
-              <div style={{ display: "grid", gridTemplateColumns: editWordIdx !== null ? "1fr 1.4fr 1fr 0.5fr" : "1fr 1.4fr 1fr", gap: 8, alignItems: "center" }}>
+            <div className="modal-footer">
+              <div className="section-label">{editWordIdx !== null ? tr('editPack.editWord') : tr('editPack.addWord')}</div>
+              <div className={`word-form ${editWordIdx !== null ? 'word-form--edit' : 'word-form--add'}`}>
                 <input value={wordInput.korean} onChange={e => setWordInput(w => ({ ...w, korean: e.target.value }))}
-                  placeholder={tr('editPack.koreanPlaceholder')} style={{ ...st.inputStyle, width: "100%" }} />
+                  placeholder={tr('editPack.koreanPlaceholder')} className="input" />
                 <input value={wordInput.english} onChange={e => setWordInput(w => ({ ...w, english: e.target.value }))}
                   onKeyDown={e => e.key === "Enter" && saveWord()}
-                  placeholder={tr('editPack.translationPlaceholder')} style={{ ...st.inputStyle, width: "100%" }} />
-                <button style={{ ...st.primaryBtn, whiteSpace: "nowrap", width: "100%" }} onClick={saveWord}>
+                  placeholder={tr('editPack.translationPlaceholder')} className="input" />
+                <button className="btn btn-primary" style={{ whiteSpace: "nowrap", width: "100%" }} onClick={saveWord}>
                   {editWordIdx !== null ? tr('editPack.save') : tr('editPack.addBtn')}
                 </button>
                 {editWordIdx !== null && (
-                  <button style={{ ...st.iconBtn, color: t.subText, fontSize: "1.1rem", padding: "0.4rem", width: "100%" }}
+                  <button className="btn-icon text-secondary word-form-cancel"
                     onClick={() => { setEditWordIdx(null); setWordInput({ korean: "", english: "" }); }}>✕</button>
                 )}
               </div>
-              {addWordMsg && <p style={{ marginTop: 8, fontSize: "0.82rem", color: t.success, marginBottom: 0 }}>{addWordMsg}</p>}
+              {addWordMsg && <p className="word-msg">{addWordMsg}</p>}
             </div>
           </div>
         </div>
@@ -958,70 +891,56 @@ ${promptInput.trim()}`;
 
       {/* ── CSV IMPORT MODAL ── */}
       {importModal && (
-        <Modal title={tr('csvImport.title')} onClose={() => setImportModal(false)} dark={dark}>
+        <Modal title={tr('csvImport.title')} onClose={() => setImportModal(false)}>
           <textarea value={importText} onChange={e => setImportText(e.target.value)}
             placeholder={CSV_HINT + "\n\n" + tr('csvImport.pastePlaceholder')}
-            style={{ ...st.inputStyle, minHeight: 160, resize: "vertical", fontFamily: "monospace", fontSize: "0.82rem" }} />
-          <div style={{ display: "flex", gap: 10, marginTop: "1rem", alignItems: "center" }}>
-            <button style={st.primaryBtn} onClick={doImport}>{tr('csvImport.importBtn')}</button>
-            <button style={st.ghostBtn} onClick={() => setImportModal(false)}>{tr('csvImport.cancelBtn')}</button>
-            <button style={{
-              ...st.ghostBtn, marginLeft: "auto",
-              background: dark ? '#d72660' : '#e040fb', color: '#fff',
-              border: 'none', boxShadow: '0 2px 8px rgba(215,38,96,0.12)'
-            }} onClick={() => { setPromptModal(true); setPromptInput(""); setPromptCopied(false); }}>
+            className="textarea textarea-mono" style={{ minHeight: 160 }} />
+          <div className="import-actions">
+            <button className="btn btn-primary" onClick={doImport}>{tr('csvImport.importBtn')}</button>
+            <button className="btn btn-ghost" onClick={() => setImportModal(false)}>{tr('csvImport.cancelBtn')}</button>
+            <button className="btn btn-ghost btn-llm" onClick={() => { setPromptModal(true); setPromptInput(""); setPromptCopied(false); }}>
               {tr('csvImport.llmPrompt')}
             </button>
           </div>
-          {importMsg && <p style={{ marginTop: "1rem", fontSize: "0.85rem", color: importMsg.startsWith("✓") ? t.success : t.danger, marginBottom: 0 }}>{importMsg}</p>}
+          {importMsg && <p className={`import-msg ${importMsg.startsWith("✓") ? 'import-msg--success' : 'import-msg--error'}`}>{importMsg}</p>}
         </Modal>
       )}
 
       {/* ── LLM PROMPT MODAL ── */}
       {promptModal && (
-        <Modal title={tr('llmPrompt.title')} onClose={() => setPromptModal(false)} dark={dark}>
+        <Modal title={tr('llmPrompt.title')} onClose={() => setPromptModal(false)}>
           <div style={{ marginBottom: 8 }}>
             <textarea value={promptInput} onChange={e => setPromptInput(e.target.value)}
               placeholder={tr('llmPrompt.placeholder')}
-              style={{ ...st.inputStyle, minHeight: 220, resize: "vertical", lineHeight: 1.6 }} />
+              className="textarea" style={{ minHeight: 220, lineHeight: 1.6 }} />
           </div>
-          <div style={{ display: "flex", gap: 10, marginTop: "1rem", alignItems: "center" }}>
-            <button style={{ ...st.primaryBtn, opacity: promptInput.trim() ? 1 : 0.5 }}
+          <div className="prompt-actions">
+            <button className="btn btn-primary" style={{ opacity: promptInput.trim() ? 1 : 0.5 }}
               disabled={!promptInput.trim()} onClick={generatePrompt}>
               {promptCopied ? tr('llmPrompt.copied') : tr('llmPrompt.generateCopy')}
             </button>
-            <button style={st.ghostBtn} onClick={() => setPromptModal(false)}>{tr('llmPrompt.close')}</button>
+            <button className="btn btn-ghost" onClick={() => setPromptModal(false)}>{tr('llmPrompt.close')}</button>
           </div>
           {promptCopied && (
-            <p style={{ marginTop: "1rem", fontSize: "0.83rem", color: t.success, lineHeight: 1.6, marginBottom: 0 }}>
+            <p className="prompt-copied-msg">
               {tr('llmPrompt.copiedMsg')}
             </p>
           )}
         </Modal>
       )}
 
-      {/* ── Language Selection Modal (first visit) — round flag buttons in grid ── */}
+      {/* ── Language Selection Modal (first visit) ── */}
       {langModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem" }}>
-          <div style={{ background: D ? "#111111" : "#fff", borderRadius: 22, padding: "1.5rem 1.5rem", textAlign: "center" }}>
-            <img src={(import.meta.env.BASE_URL || '/') + 'icon.png'} alt="HanCards" style={{ width: 150, height: 150 }} />
-            <p style={{ fontWeight: 800, fontSize: "1.4rem", color: t.text, margin: 0 }}>한카드 HanCards</p>
-            <p style={{ color: t.subText, fontSize: "0.88rem", margin: 0, marginBottom: "2rem" }}>Choose your language</p>
-            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 10 }}>
+        <div className="lang-overlay">
+          <div className="lang-modal">
+            <img src={(import.meta.env.BASE_URL || '/') + 'icon.png'} alt="HanCards" className="lang-modal-icon" />
+            <p className="lang-modal-title">한카드 HanCards</p>
+            <p className="lang-modal-subtitle">Choose your language</p>
+            <div className="lang-btn-group">
               {LANGUAGES.map(lang => (
                 <button key={lang.code} onClick={() => handleLangSelect(lang.code)}
-                  style={{
-                    cursor: "pointer", borderRadius: 14, fontFamily: "inherit",
-                    fontWeight: 600, transition: "all 0.15s",
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                    fontSize: "0.92rem", padding: "0.75rem 1.6rem",
-                    background: D ? `${lang.color}22` : `${lang.color}18`,
-                    color: lang.color,
-                    border: `1.5px solid ${lang.borderColor}`,
-                    boxShadow: `0 0 0 0 ${lang.color}00`,
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.background = D ? `${lang.color}44` : `${lang.color}30`; e.currentTarget.style.boxShadow = `0 2px 12px ${lang.color}33`; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = D ? `${lang.color}22` : `${lang.color}18`; e.currentTarget.style.boxShadow = `0 0 0 0 ${lang.color}00`; }}
+                  className="lang-btn"
+                  style={{ '--lang-color': lang.color, '--lang-border': lang.borderColor }}
                 >{lang.flag} {lang.label}</button>
               ))}
             </div>
@@ -1030,26 +949,12 @@ ${promptInput.trim()}`;
       )}
 
       {/* ── Floating language switcher ── */}
-      <button onClick={cycleLang} style={{
-        position: "fixed", bottom: 24, right: 80, zIndex: 200,
-        height: 46, borderRadius: 23, paddingInline: 14,
-        background: D ? "#e8e8e8" : "#1a1a1a", color: D ? "#111" : "#fff",
-        border: "none", cursor: "pointer", fontSize: "0.82rem", fontWeight: 600,
-        boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
-        display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-      }}>
+      <button onClick={cycleLang} className="fab fab-lang">
         {nextLang ? `${nextLang.flag} ${nextLang.code.toUpperCase()}` : "🌐"}
       </button>
 
       {/* ── Floating dark mode ── */}
-      <button onClick={() => setDark(d => !d)} style={{
-        position: "fixed", bottom: 24, right: 24, zIndex: 200,
-        width: 46, height: 46, borderRadius: "50%",
-        background: D ? "#e8e8e8" : "#1a1a1a", color: D ? "#111" : "#fff",
-        border: "none", cursor: "pointer", fontSize: "1.1rem",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-      }}>
+      <button onClick={() => setDark(d => !d)} className="fab fab-theme">
         {dark ? "☀️" : "🌙"}
       </button>
     </div>

@@ -4,6 +4,7 @@
   },
   "nav": {
     "study": "Học",
+    "quiz": "Trắc nghiệm",
     "manage": "Từ vựng",
     "about": "Giới thiệu"
   },
@@ -93,6 +94,13 @@
   "about": {
     "description": "HanCards là ứng dụng flashcard đơn giản, hoạt động offline để học từ vựng tiếng Hàn. Bạn có thể tự thêm bộ từ vựng mới bằng CSV theo mẫu hoặc học trên bộ có sẵn. Web được tạo bởi",
     "copyright": "© {{year}} Team Bacon. All rights reserved."
+  },
+  "quiz": {
+    "mixed": "Trộn",
+    "toKorean": "Sang tiếng Hàn",
+    "fromKorean": "Từ tiếng Hàn",
+    "question": "Nghĩa là gì?",
+    "noWords": "Cần ít nhất 2 từ đang hoạt động. Vào Từ vựng và bật một số bộ từ vựng!"
   },
   "loading": "Đang tải…"
 }
