@@ -381,11 +381,6 @@ export default function App() {
   useEffect(() => { scoresRef.current = scores; }, [scores]);
   useEffect(() => { screenRef.current = screen; }, [screen]);
 
-  /* Sync theme on <html> so Safari overscroll / status-bar matches */
-  useEffect(() => {
-    document.documentElement.dataset.theme = dark ? "dark" : "light";
-  }, [dark]);
-
 
 
   const activeWords = useCallback((ps = packsRef.current) =>

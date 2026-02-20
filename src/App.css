@@ -1047,7 +1047,7 @@
    ═══════════════════════════════════════════════════════════ */
 
 .quiz-screen {
-  padding: 2rem 2rem 5rem 2rem;
+  padding: 2rem 2rem 10rem 2rem;
   margin: 0;
   max-width: 600px;
   margin-left: auto;
@@ -1137,11 +1137,9 @@
   outline: none;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .quiz-option:hover:not(.quiz-option--correct):not(.quiz-option--wrong):not(.quiz-option--dimmed) {
-    border-color: var(--color-text-secondary);
-    background: var(--color-toggle-bg);
-  }
+.quiz-option:hover:not(.quiz-option--correct):not(.quiz-option--wrong):not(.quiz-option--dimmed) {
+  border-color: var(--color-text-secondary);
+  background: var(--color-toggle-bg);
 }
 
 .quiz-option-letter {
