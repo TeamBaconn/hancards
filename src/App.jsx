@@ -191,7 +191,8 @@ export default function App() {
     if (currentWord) {
       const key = currentWord.korean;
       const oldScore = s[key] ?? SCORE.defaultScore;
-      if (didFlipRef.current) s[key] = Math.max(SCORE.min, oldScore - SCORE.flipPenalty);
+      if (autoSpeakRef.current) s[key] = Math.min(SCORE.max, oldScore + SCORE.autoSpeakBonus);
+      else if (didFlipRef.current) s[key] = Math.max(SCORE.min, oldScore - SCORE.flipPenalty);
       else s[key] = Math.min(SCORE.max, oldScore + SCORE.skipBonus);
     }
     didFlipRef.current = false;

@@ -38,6 +38,8 @@ export const SCORE = {
   skipBonus: 5,
   /** Points subtracted when user reveals the answer (needs practice) */
   flipPenalty: 0,
+  /** Points added per card in auto-speak / speaker mode */
+  autoSpeakBonus: 2,
   /** Points added for correct quiz answer */
   quizBonus: 10,
   /** Points subtracted for wrong quiz answer */
